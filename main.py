@@ -8,9 +8,7 @@ app = FastAPI(title="Time API", version="1.0.0")
 @app.get("/")
 def root():
     return {
-        "message": "Time API",
-        "docs": "/docs",
-        "endpoints": ["/time", "/date", "/date/local"],
+        "message": "Добро пожаловать в Time Server API! Используйте /time для получения текущего времени.",
     }
 
 
