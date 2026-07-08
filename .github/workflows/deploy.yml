@@ -71,6 +71,13 @@ jobs:
             docker stop time-api 2>/dev/null || true
             docker rm time-api 2>/dev/null || true
 
+            # Освободить порт 8000, если его занял другой контейнер
+            PORT_CONTAINER=$(docker ps -q --filter "publish=8000")
+            if [ -n "$PORT_CONTAINER" ]; then
+              docker stop "$PORT_CONTAINER" || true
+              docker rm "$PORT_CONTAINER" || true
+            fi
+
             LOKI_ENDPOINT="${LOKI_URL:-http://host.docker.internal:3100/loki/api/v1/push}"
 
             docker run -d \
