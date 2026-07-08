@@ -1,0 +1,12 @@
+name: autodeploy
+
+services:
+  time-api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      LOKI_URL: ${LOKI_URL:-http://host.docker.internal:3100/loki/api/v1/push}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped

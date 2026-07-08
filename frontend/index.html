@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Docker Test App - Frontend</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 24px;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+    }
+
+    header {
+      background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      color: #fff;
+      padding: 32px;
+      text-align: center;
+    }
+
+    header h1 {
+      font-size: 2rem;
+      margin-bottom: 8px;
+    }
+
+    header p {
+      opacity: 0.95;
+      font-size: 1rem;
+    }
+
+    .content { padding: 32px; }
+
+    .section {
+      margin-bottom: 28px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid #eee;
+    }
+
+    .section:last-child { border-bottom: none; margin-bottom: 0; }
+
+    .section h2 {
+      font-size: 1.2rem;
+      margin-bottom: 16px;
+      color: #333;
+    }
+
+    .btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .result {
+      margin-top: 16px;
+      padding: 16px;
+      background: #e8f5e9;
+      border-radius: 8px;
+      border-left: 4px solid #4caf50;
+      font-family: "Courier New", monospace;
+      font-size: 0.9rem;
+      white-space: pre-wrap;
+      word-break: break-all;
+      display: none;
+    }
+
+    .result.error {
+      background: #ffebee;
+      border-left-color: #f44336;
+    }
+
+    .result.visible { display: block; }
+
+    .math-row {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .math-row input {
+      width: 80px;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🐳 Docker Test Application</h1>
+      <p>Веб-интерфейс для тестирования FastAPI бэкенда в Docker</p>
+    </header>
+
+    <div class="content">
+      <div class="section">
+        <h2>🟢 Статус подключения</h2>
+        <button class="btn" onclick="checkHealth()">Проверить здоровье</button>
+        <div id="health-result" class="result"></div>
+      </div>
+
+      <div class="section">
+        <h2>📊 Информация о системе</h2>
+        <button class="btn" onclick="getSystemInfo()">Получить информацию</button>
+        <div id="system-result" class="result"></div>
+      </div>
+
+      <div class="section">
+        <h2>🏠 Главная информация</h2>
+        <button class="btn" onclick="getHomeInfo()">Получить главную информацию</button>
+        <div id="home-result" class="result"></div>
+      </div>
+
+      <div class="section">
+        <h2>🧮 Математические операции</h2>
+        <div class="math-row">
+          <input type="number" id="num-a" value="10" placeholder="a">
+          <span>+</span>
+          <input type="number" id="num-b" value="5" placeholder="b">
+          <button class="btn" onclick="mathAdd()">Сложить</button>
+        </div>
+        <div class="math-row">
+          <input type="number" id="num-c" value="6" placeholder="a">
+          <span>×</span>
+          <input type="number" id="num-d" value="7" placeholder="b">
+          <button class="btn" onclick="mathMultiply()">Умножить</button>
+        </div>
+        <div id="math-result" class="result"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const API = "";
+
+    async function fetchApi(path) {
+      const response = await fetch(`${API}${path}`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      return response.json();
+    }
+
+    function showResult(id, data, isError = false) {
+      const el = document.getElementById(id);
+      el.textContent = JSON.stringify(data, null, 2);
+      el.className = `result visible${isError ? " error" : ""}`;
+    }
+
+    async function checkHealth() {
+      try {
+        const data = await fetchApi("/health");
+        showResult("health-result", {
+          status: data.status === "ok" ? "healthy" : data.status,
+          timestamp: new Date().toISOString(),
+        });
+      } catch (e) {
+        showResult("health-result", { error: e.message }, true);
+      }
+    }
+
+    async function getSystemInfo() {
+      try {
+        const data = await fetchApi("/datetime");
+        showResult("system-result", data);
+      } catch (e) {
+        showResult("system-result", { error: e.message }, true);
+      }
+    }
+
+    async function getHomeInfo() {
+      try {
+        const data = await fetchApi("/");
+        showResult("home-result", data);
+      } catch (e) {
+        showResult("home-result", { error: e.message }, true);
+      }
+    }
+
+    async function mathAdd() {
+      const a = document.getElementById("num-a").value;
+      const b = document.getElementById("num-b").value;
+      try {
+        const data = await fetchApi(`/math/add?a=${a}&b=${b}`);
+        showResult("math-result", data);
+      } catch (e) {
+        showResult("math-result", { error: e.message }, true);
+      }
+    }
+
+    async function mathMultiply() {
+      const a = document.getElementById("num-c").value;
+      const b = document.getElementById("num-d").value;
+      try {
+        const data = await fetchApi(`/math/multiply?a=${a}&b=${b}`);
+        showResult("math-result", data);
+      } catch (e) {
+        showResult("math-result", { error: e.message }, true);
+      }
+    }
+  </script>
+</body>
+</html>

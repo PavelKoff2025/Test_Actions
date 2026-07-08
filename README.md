@@ -1,27 +1,35 @@
-# Time Server API
+# Crypto Simulator Time Server API
 
-Простой REST API на **FastAPI** для получения текущего времени, даты и конвертации часовых поясов.
+FastAPI-приложение: Time Server API + эмулятор crypto-бэкенда с отправкой логов в **Loki** и визуализацией в **Grafana**.
 
-**Live:** http://80.78.246.211:8000/docs
+**Live:** http://80.78.246.211:8000/docs  
+**UI:** http://80.78.246.211:8000/ui
 
 ## Возможности
 
-- Текущее время, дата и datetime в UTC
-- Конвертация времени между часовыми поясами
-- Health check для мониторинга
-- Swagger-документация из коробки
-- CI/CD: сборка Docker-образа и автодеплой на VPS
+- Time API: время, дата, datetime, конвертация часовых поясов
+- Crypto-симулятор: тикеры, ордербук, сделки, фоновые события
+- Логирование в Loki (`send_log_to_loki`) с метками `job`, `app`, `level`
+- Веб-интерфейс для тестирования API (`/ui`)
+- Docker Compose для локального запуска
+- CI/CD: сборка образа и автодеплой на VPS через GitHub Actions
 
 ## Эндпоинты
 
 | Метод | Путь | Описание |
 |-------|------|----------|
-| `GET` | `/` | Приветствие |
+| `GET` | `/` | Информация о контейнере |
+| `GET` | `/ui` | Веб-интерфейс |
 | `GET` | `/time` | Текущее время (UTC) |
 | `GET` | `/date` | Текущая дата (UTC) |
 | `GET` | `/datetime` | Дата и время (UTC) |
 | `GET` | `/convert` | Конвертация UTC → часовой пояс |
-| `GET` | `/health` | Проверка состояния |
+| `GET` | `/health` | Health check |
+| `GET` | `/crypto/ticker/{symbol}` | Тикер криптовалюты |
+| `GET` | `/crypto/orderbook/{symbol}` | Ордербук |
+| `GET` | `/crypto/trades/{symbol}` | Последние сделки |
+| `GET` | `/math/add` | Сложение чисел |
+| `GET` | `/math/multiply` | Умножение чисел |
 | `GET` | `/docs` | Swagger UI |
 
 ## Быстрый старт
@@ -30,15 +38,40 @@
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
-uvicorn main:app --reload
+python main.py
 ```
 
 ## Docker
 
 ```bash
-docker build -t time-api .
-docker run -p 8000:8000 time-api
+docker compose up -d --build
 ```
+
+Мониторинг (Loki + Grafana):
+
+```bash
+docker compose -f docker-compose.monitoring.yml up -d
+```
+
+- Grafana: http://localhost:3000 (`admin` / `admin`)
+- Loki: http://localhost:3100
+
+## Структура проекта
+
+```
+app.py                          # FastAPI-приложение, Loki-логирование
+main.py                         # Точка входа (uvicorn)
+frontend/index.html             # Веб-интерфейс
+docker-compose.yml              # Приложение
+docker-compose.monitoring.yml   # Loki + Grafana
+.github/workflows/deploy.yml    # CI/CD
+```
+
+## Grafana
+
+- Data source: Loki (`http://loki:3100`)
+- Dashboard: **Logs / App** — логи + pie chart по уровням
+- Фильтр: `{job="app", app=~"$app"}`
 
 ## CI/CD
 
@@ -51,7 +84,7 @@ GitHub Actions (`.github/workflows/deploy.yml`):
 
 ## Стек
 
-Python · FastAPI · Uvicorn · Docker · GitHub Actions · GHCR
+Python · FastAPI · Uvicorn · Loki · Grafana · Docker · GitHub Actions · GHCR
 
 ## Лицензия
 
