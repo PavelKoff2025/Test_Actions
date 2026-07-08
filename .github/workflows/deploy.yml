@@ -54,12 +54,13 @@ jobs:
           IMAGE: ${{ env.IMAGE_NAME }}:latest
           GHCR_TOKEN: ${{ secrets.GHCR_TOKEN }}
           GHCR_USER: ${{ github.actor }}
+          LOKI_URL: ${{ secrets.LOKI_URL }}
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.SSH_PORT || 22 }}
-          envs: IMAGE,GHCR_TOKEN,GHCR_USER
+          envs: IMAGE,GHCR_TOKEN,GHCR_USER,LOKI_URL
           script: |
             set -e
 
@@ -70,10 +71,14 @@ jobs:
             docker stop time-api 2>/dev/null || true
             docker rm time-api 2>/dev/null || true
 
+            LOKI_ENDPOINT="${LOKI_URL:-http://host.docker.internal:3100/loki/api/v1/push}"
+
             docker run -d \
               --name time-api \
               --restart unless-stopped \
+              --add-host=host.docker.internal:host-gateway \
               -p 8000:8000 \
+              -e LOKI_URL="$LOKI_ENDPOINT" \
               "$IMAGE"
 
             docker image prune -f
